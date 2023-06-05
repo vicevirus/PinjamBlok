@@ -9,7 +9,7 @@ export default {
         './resources/views/**/*.blade.php',
     ],
     daisyui: {
-        themes: ['business'],
+        themes: ['synthwave'],
       },
 
     theme: {

@@ -28,6 +28,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/transacts', [TransactController::class, 'index'])->name('transact.index');
     Route::get('/transacts/store', [TransactController::class, 'store'])->name('transact.store')->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
 
+
+    Route::get('/generate-qrcode/{itemId}', [ItemController::class, 'generateQRCode'])->name('item.generateqr');
     // ** Log Out **
     Route::get('/logout', function () {
         Auth::logout();

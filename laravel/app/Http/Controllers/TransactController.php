@@ -14,14 +14,32 @@ use Exception;
 class TransactController extends Controller
 {
     public function index()
-    {
-        $transacts = Transaction::all();
-        $itemIds = $transacts->pluck('item_id');
-        $items = Item::whereIn('id', $itemIds)->get();
-        $itemNames = $this->mapItemNames($items);
+{
+    $transacts = Transaction::all();
+    $transactionHashes = $transacts->pluck('transact_hash');
+    $items = Transaction::whereIn('transact_hash', $transactionHashes)->get();
+   
+    $itemNames = $this->mapItemNames($items);
 
-        return view('transact.index', compact('transacts', 'itemNames'));
+    foreach ($transacts as $transact) {
+        $hash = $transact->transact_hash;
+        $availability = $this->checkTransactAvailability($hash);
+        $transact->available = $availability;
     }
+
+    
+
+    return view('transact.index', compact('transacts', 'itemNames'));
+}
+
+private function checkTransactAvailability($hash)
+{
+    $url = "http://localhost:3000/api/transact/$hash";
+    $response = Http::get($url);
+    
+
+    return $response->successful();
+}
 
     private function mapItemNames($items)
     {
@@ -49,6 +67,13 @@ class TransactController extends Controller
 
             $transact_hash = hash('sha256', Str::random(40));
 
+            $user = $request->user();
+
+            $strippedToken = $this->createAndRetrieveToken($user);
+
+            // Store the transaction in the blockchain
+            $this->storeInBlockchain($strippedToken, $validatedData, $transact_hash);
+
             // Create a new transaction record in the database
             $transaction = new Transaction;
             $transaction->action = $validatedData['action'];
@@ -60,22 +85,9 @@ class TransactController extends Controller
             $transaction->created_at = $validatedData['created_at'];
             $transaction->save();
 
-            $user = $request->user();
 
-            // Revoke existing Store tokens
-            $user->tokens()->where('name', 'Store Token')->delete();
 
-            // Create a new token
-            $token = $user->createToken('Store Token');
-            $token->accessToken->save();
 
-            $tokenValue = $token->plainTextToken;
-
-            preg_match('/\|(.+)/', $tokenValue, $matches);
-            $strippedToken = $matches[1] ?? null;
-
-            // Store the transaction in the blockchain
-            $this->storeInBlockchain($strippedToken, $validatedData, $transact_hash);
 
             return response()->json(['message' => 'Transaction stored successfully.', 'Blockchain Hash' => $transact_hash]);
         } catch (Exception $e) {
@@ -91,7 +103,7 @@ class TransactController extends Controller
                 'Authorization' => 'Bearer ' . $bearerToken,
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
-            ])->post('http://localhost:3000/api/auth', [
+            ])->post('http://localhost:3000/api/transact/store', [
                 'action' => $data['action'],
                 'duration' => $data['duration'],
                 'borrower_id' => $data['borrower_id'],
@@ -109,5 +121,22 @@ class TransactController extends Controller
             // Handle the exception, log or report it, and throw it to the calling function
             throw $e;
         }
+    }
+
+    private function createAndRetrieveToken($user)
+    {
+        // Revoke existing Store tokens
+        $user->tokens()->where('name', 'Store Token')->delete();
+
+        // Create a new token
+        $token = $user->createToken('Store Token');
+        $token->accessToken->save();
+
+        $tokenValue = $token->plainTextToken;
+
+        preg_match('/\|(.+)/', $tokenValue, $matches);
+        $strippedToken = $matches[1] ?? null;
+
+        return $strippedToken;
     }
 }

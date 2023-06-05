@@ -33,7 +33,7 @@ class TransactionSeeder extends Seeder
                 'transact_hash' => $transactHash
 
 
-                // Other column values
+          
             ]);
         }
     }

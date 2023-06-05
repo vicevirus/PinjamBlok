@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
 contract TransactionRegistry {
@@ -9,12 +8,11 @@ contract TransactionRegistry {
         uint256 item_id;
         uint256 room_id;
         uint256 created_at;
-        bytes32 transact_hash;
+        string transact_hash;
     }
 
-    Transaction[] public transactions;
-    mapping(bytes32 => uint256) public transactionIndices;
-
+    mapping(string => Transaction) public transactions;
+    
     function storeTransaction(
         string memory _action,
         uint256 _duration,
@@ -22,8 +20,10 @@ contract TransactionRegistry {
         uint256 _item_id,
         uint256 _room_id,
         uint256 _created_at,
-        bytes32 _transact_hash
+        string memory _transact_hash
     ) public {
+        require(transactions[_transact_hash].created_at == 0, "Transaction already exists");
+        
         Transaction memory newTransaction = Transaction(
             _action,
             _duration,
@@ -34,23 +34,21 @@ contract TransactionRegistry {
             _transact_hash
         );
 
-        transactions.push(newTransaction);
-        transactionIndices[_transact_hash] = transactions.length - 1;
+        transactions[_transact_hash] = newTransaction;
     }
 
-    function getTransactionByHash(bytes32 _transact_hash) public view returns (
+    function getTransactionByHash(string memory _transact_hash) public view returns (
         string memory,
         uint256,
         uint256,
         uint256,
         uint256,
         uint256,
-        bytes32
+        string memory
     ) {
-        uint256 index = transactionIndices[_transact_hash];
-        require(index < transactions.length, "Transaction not found");
+        Transaction storage transaction = transactions[_transact_hash];
+        require(bytes(transaction.transact_hash).length != 0, "Transaction not found");
 
-        Transaction storage transaction = transactions[index];
         return (
             transaction.action,
             transaction.duration,

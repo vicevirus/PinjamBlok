@@ -1,3 +1,4 @@
+How do I get the available attribute here?
 <x-app-layout>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.css" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
@@ -36,7 +37,9 @@
                         <td>{{ $transact->duration }}</td>
                         <td>{{ $transact->room_id }}</td>
                         <td>{{ $transact->borrower_id }}</td>
-                        <td>Valid/Rogue</td>
+                        
+                        
+                        <td>{{ $transact->available ? 'Valid' : 'Rogue' }}</td>
                         
                     </tr>
                 @endforeach

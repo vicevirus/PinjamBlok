@@ -16,7 +16,7 @@ TransactionRegistry.setProvider(web3.currentProvider);
 // Middleware to parse JSON requests
 app.use(express.json());
 
-app.get('/transactions/:hash', async (req, res) => {
+app.get('/api/transact/:hash', async (req, res) => {
   const { hash } = req.params;
 
   try {
@@ -40,7 +40,7 @@ app.get('/transactions/:hash', async (req, res) => {
   }
 });
 
-app.post('/api/auth', async (req, res) => {
+app.post('/api/transact/store', async (req, res) => {
   const { action, duration, borrower_id, item_id, room_id, created_at, transact_hash } = req.body;
 
   // Extract the token from the request headers
